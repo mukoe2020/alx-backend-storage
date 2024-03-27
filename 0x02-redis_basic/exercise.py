@@ -33,26 +33,22 @@ class Cache:
         """
         data = self._redis.get(key)
         if self._redis.exists(key):
-            data = self._redis.get(key) 
+            data = self._redis.get(key)
             if fn:
                 return fn(data)
             else:
                 return data
-        else
-            return None
-        
+        else:
+             return None
+
     def get_str(data: bytes) -> str:
-            """
-            convert bytes to string
-            """
-            return data.decode('utf-8') 
-        
+        """
+        convert bytes to string
+        """
+        return data.decode('utf-8')
+
     def get_int(data: bytes) -> int:
-            """
-            convert bytes to int
-            """
-            return int(data.decode('utf-8'))
-        
-
-
-
+        """
+        convert bytes to int
+        """
+        return int(data.decode('utf-8'))
