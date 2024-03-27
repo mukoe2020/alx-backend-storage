@@ -3,9 +3,11 @@
 create a Cache class that will implement a simple cache using Redis
 """
 
+from crypt import Method
 import redis
 import uuid
 from typing import Union
+from functools import wraps
 
 
 class Cache:
@@ -39,7 +41,7 @@ class Cache:
             else:
                 return data
         else:
-             return None
+            return None
 
     def get_str(data: bytes) -> str:
         """
@@ -52,3 +54,15 @@ class Cache:
         convert bytes to int
         """
         return int(data.decode('utf-8'))
+
+    def count_calls(fn: callable) -> callable:
+        """
+        return function that increments the count for that key
+        method is called and returns value returned by the original method.
+        """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        key = method.__qualname__
+        self._redis.incr(key)
+        return _Method(self, *args, **kwargs)
+    return wrapper
