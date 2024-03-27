@@ -83,3 +83,12 @@ class Cache:
         if not self._redis.exists(key):
             return None
         return int.from_bytes(self._redis.get(key), "big")
+    
+    def replay(self):
+        """Method that returns the history of calls of a particular function"""
+        method = self.store.__qualname__
+        inputs = self._redis.lrange(method + ":inputs", 0, -1)
+        outputs = self._redis.lrange(method + ":outputs", 0, -1)
+        print(f"{method} was called {self._redis.get(method).decode('utf-8')} times:")
+        for i, o in zip(inputs, outputs):
+            print(f"{method}(*{i.decode('utf-8')}) -> {o.decode('utf-8')}")
