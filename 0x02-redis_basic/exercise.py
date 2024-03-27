@@ -26,3 +26,15 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
+    
+    def get(self, key: str, fn: callable = None) -> Union[str, bytes, int, float]:
+        """
+        convert data back to the desired format
+        """
+        data = self._redis.get(key)
+        if fn:
+            return fn(data)
+        return data
+
+
+
