@@ -26,11 +26,44 @@ def call_history(method: Callable) -> Callable:
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """Wrapper for recording calls"""
-        self._redis.rpush(method.__qualname__ + ":inputs", str(args))
+        self._redis.rpush(method.__qualname__ + ":all_inputs", str(args))
         result = method(self, *args, **kwargs)
         self._redis.rpush(method.__qualname__ + ":outputs", str(result))
         return result
     return wrapper
+
+
+def replay(fn: Callable):
+    """display the history of calls of a particular function"""
+    r = redis.Redis()
+    function_name = fn.__qualname__
+    value = r.get(function_name)
+    try:
+        value = int(value.decode("utf-8"))
+    except Exception:
+        value = 0
+
+    # print(f"{function_name} was called {value} times")
+    print("{} was called {} times:".format(function_name, value))
+    # inputs = r.lrange(f"{function_name}:inputs", 0, -1)
+    inputs = r.lrange("{}:inputs".format(function_name), 0, -1)
+
+    # outputs = r.lrange(f"{function_name}:outputs", 0, -1)
+    outputs = r.lrange("{}:outputs".format(function_name), 0, -1)
+
+    for input, output in zip(inputs, outputs):
+        try:
+            input = input.decode("utf-8")
+        except Exception:
+            input = ""
+
+        try:
+            output = output.decode("utf-8")
+        except Exception:
+            output = ""
+
+        # print(f"{function_name}(*{input}) -> {output}")
+        print("{}(*{}) -> {}".format(function_name, input, output))
 
 
 class Cache:
@@ -83,13 +116,3 @@ class Cache:
         if not self._redis.exists(key):
             return None
         return int.from_bytes(self._redis.get(key), "big")
-    
-    def replay(self):
-        """Method that returns the history of calls of a particular function"""
-        method = self.store.__qualname__
-        inputs = self._redis.lrange(method + ":inputs", 0, -1)
-        outputs = self._redis.lrange(method + ":outputs", 0, -1)
-        print(f"{method} was called {self._redis.get(method).decode('utf-8')} times:")
-        for i, o in zip(inputs, outputs):
-            print(f"{method}(*{i.decode('utf-8')}) -> {o.decode('utf-8')}")
-    
